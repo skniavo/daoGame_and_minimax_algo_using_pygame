@@ -5,17 +5,27 @@ from .piece import Piece
 class Board:
     def __init__(self):
         self.board = []
-        self.selected_piece = None
         # red_left, white_left red_kings, white_kings are proer to checkers
         self.red_left = self.white_left = 4 
         self.red_kings = self.white_kings = 0
         self.create_board()
+        
+    def move(self,piece,row,col):
+        # self.board[piece.row][piece.col] is where the piece is
+        # self.board[row][col] is where we want to go
+        self.board[piece.row][piece.col], self.board[row][col] = self.board[row][col], self.board[piece.row][piece.col] #swap
+        piece.move(row,col)
+        
+        
         
     def draw_squares(self, win):
         win.fill(BLACK)
         for row in range(ROWS):
             for col in range(row % 2, ROWS, 2):
                 pygame.draw.rect(win, RED,(row*SQUARE_SIZE, col*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+                
+    def get_piece(self,row,col):
+        return self.board[row][col]
                 
     def create_board(self):
         for row in range(ROWS):

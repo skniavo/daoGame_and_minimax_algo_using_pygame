@@ -4,7 +4,7 @@ from .constants import *
 
 
 class Piece:
-    PADDING = 20 #Dist between the edge of the square and the edge of the circle
+    PADDING = 40 #Dist between the edge of the square and the edge of the circle
     OUTLINE =  2 #Epaisseur pour faire genre c'est un border
     def __init__(self,row,col,color):
         self.row = row
@@ -36,6 +36,12 @@ class Piece:
         radius =  SQUARE_SIZE //2 - self.PADDING
         pygame.draw.circle(win, GREY, (self.x, self.y), radius + self.OUTLINE) #Larger circle to make border
         pygame.draw.circle(win, self.color, (self.x, self.y), radius )
+        
+    def move(self, row,col):
+        self.row = row
+        self.col = col
+        self.calc_pos()
+        
         
     def __repr__(self) -> str:
         return str(self.color)

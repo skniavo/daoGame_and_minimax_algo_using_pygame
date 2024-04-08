@@ -1,15 +1,24 @@
 import pygame
-from files.constants import WIDTH,HEIGHT
+from files.constants import WIDTH,HEIGHT, SQUARE_SIZE
 from files.board import Board
+from files.game import Game
 
 FPS = 60
 WIN = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption('dao game by Liantsoa')
 
+def get_row_col_from_mouse(pos):
+    """identifies row and col values 
+    when pressing mouse down"""
+    x, y = pos
+    row = y // SQUARE_SIZE
+    col = x // SQUARE_SIZE
+    return row, col 
+
 def main():
     run = True
     clock = pygame.time.Clock()
-    board = Board()
+    game = Game(WIN)
     
     while run:
         clock.tick(FPS)
@@ -19,10 +28,10 @@ def main():
                 run = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                pass
-            
-        board.draw(WIN)
-        pygame.display.update()                
+                pos = pygame.mouse.get_pos() # get mouse position
+                row, col = get_row_col_from_mouse(pos) 
+                
+        game.update()              
     pygame.quit()
         
 main()
