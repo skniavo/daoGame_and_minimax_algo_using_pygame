@@ -45,5 +45,41 @@ class Board:
                 piece = self.board[row][col]
                 if piece != 0:
                     piece.draw(win)
+                   
+    def get_valid_moves(self, piece):
+        moves = {}
+        DIRECTIONS = [[-1,-1],[-1,0],[-1,1],[0,1],[1,1],[1,0],[1,-1],[0,-1]]
+        
+        for d in DIRECTIONS:
+            r, c = piece.row, piece.col
+            last_valid = None
+            while True:
+                r += d[0]
+                c += d[1]
+                if 0 <= r < ROWS and 0 <= c < COLS:
+                    if self.board[r][c] != 0:  # Vérifie s'il y a un obstacle
+                        break
+                    last_valid= (r,c)
+                else:
+                    break  # Arrête la boucle si on sort des limites du plateau
+            if last_valid:
+                moves[last_valid]=[]
+        return moves
+
+
+    
+    
+
+
+
+                
+            
+            
+             
+        
+        
+        
+        
+         
                  
                 

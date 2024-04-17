@@ -1,5 +1,5 @@
 import pygame
-from files.constants import WIDTH,HEIGHT, SQUARE_SIZE
+from files.constants import WIDTH,HEIGHT, SQUARE_SIZE, RED
 from files.board import Board
 from files.game import Game
 
@@ -29,7 +29,9 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos() # get mouse position
-                row, col = get_row_col_from_mouse(pos) 
+                row, col = get_row_col_from_mouse(pos)
+                game.select(row, col) 
+                
                 
         game.update()              
     pygame.quit()
