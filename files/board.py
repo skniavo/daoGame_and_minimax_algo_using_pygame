@@ -1,5 +1,5 @@
 import pygame
-from .constants import BLACK, ROWS, COLS, RED, SQUARE_SIZE, WHITE
+from .constants import BOARD_LIGHT, BOARD_DARK, ROWS, COLS, SQUARE_SIZE, BLACK, WHITE
 from .piece import Piece
 
 class Board:
@@ -19,10 +19,12 @@ class Board:
         piece.move(row,col)
              
     def draw_squares(self, win):
-        win.fill(BLACK)
+        # Fill background with light color and draw dark squares
+        win.fill(BOARD_LIGHT)
         for row in range(ROWS):
-            for col in range(row % 2, ROWS, 2):
-                pygame.draw.rect(win, RED,(row*SQUARE_SIZE, col*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+            # start column depends on row to create checker pattern
+            for col in range(row % 2, COLS, 2):
+                pygame.draw.rect(win, BOARD_DARK, (col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
                 
     def get_piece(self,row,col):
         return self.board[row][col]
@@ -34,7 +36,7 @@ class Board:
                 if row == col:
                     self.board[row].append(Piece(row, col, WHITE))
                 elif row + col == COLS -1:
-                    self.board[row].append(Piece(row, col, RED))
+                    self.board[row].append(Piece(row, col, BLACK))
                 else:
                     self.board[row].append(0)
           
@@ -48,7 +50,7 @@ class Board:
                     
     def get_valid_moves(self, piece):
         if piece.color == WHITE:
-            opponent_color = RED
+            opponent_color = BLACK
         else:
             opponent_color = WHITE
         moves = {}
@@ -124,30 +126,25 @@ class Board:
         return all(self.board[row][col] != 0 and self.board[row][col].color == color for row, col in corners)    
     
     def winner(self):
-        if self.check_winner(RED):
-            return RED
+        if self.check_winner(BLACK):
+            return BLACK
         if self.check_winner(WHITE):
             return WHITE
         return None
-    
     def evaluate(self, player_color):
-        opponent_color = RED if player_color == WHITE else WHITE
-        score = 0
-        
+        opponent_color = BLACK if player_color == WHITE else WHITE
+        # Terminal states
         if self.check_winner(player_color):
-            return float('inf')
+            return 500
         if self.check_winner(opponent_color):
-            return float('-inf')
-        
+            return -500
+
+        score = 0
+        # Heuristic components
         score += self.potential_alignment_score(player_color)
-        score -= self.potential_alignment_score(opponent_color)
-        
         score += self.potential_square_2x2_score(player_color)
-        score -= self.potential_square_2x2_score(opponent_color)
-        
         score += self.potential_corners_score(player_color)
-        score -= self.potential_corners_score(opponent_color)
-        
+
         return score
 
     def potential_alignment_score(self, color):
@@ -195,25 +192,7 @@ class Board:
         
         return count
     
-    def evaluate(self, player_color):
-        opponent_color = RED if player_color == WHITE else WHITE
-        score = 0
-        
-        if self.check_winner(player_color):
-            return 500
-        if self.check_winner(opponent_color):
-            return -500
-        
-        score += self.potential_alignment_score(player_color)
-        #score -= self.potential_alignment_score(opponent_color)
-        
-        score += self.potential_square_2x2_score(player_color)
-        #score -= self.potential_square_2x2_score(opponent_color)
-        
-        score += self.potential_corners_score(player_color)
-        #score -= self.potential_corners_score(opponent_color)
-        
-        return score
+    
     
     def get_all_pieces(self, color):
         pieces = []

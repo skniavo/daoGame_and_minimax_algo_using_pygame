@@ -1,6 +1,6 @@
 import pygame
 import random
-from files.constants import WIDTH, HEIGHT, SQUARE_SIZE, RED, WHITE
+from files.constants import WIDTH, HEIGHT, SQUARE_SIZE, BLACK, WHITE
 from files.board import Board
 from files.game import Game
 from minimax.algorithm import minimax, minimax_red
@@ -38,7 +38,7 @@ def two_player_game():
                             print(f"#####################THE WHITE HAS WON #################")
                             print("###############################################################")
                         else:
-                            print(f"#####################THE RED HAS WON #################")
+                            print(f"#####################THE BLACK HAS WON #################")
                             print("###############################################################")
                             
                         game_over = True
@@ -82,12 +82,12 @@ def simple_machine_game():
             if event.type == pygame.QUIT:
                 run = False
 
-            if not game_over and game.turn == RED and event.type == pygame.MOUSEBUTTONDOWN:
+            if not game_over and game.turn == BLACK and event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()  # get mouse position
                 row, col = get_row_col_from_mouse(pos)
                 if game.select(row, col):
-                    if game.board.check_winner(RED):
-                        print(f"#############THE RED HAS WON ###############################")
+                    if game.board.check_winner(BLACK):
+                        print(f"#############THE BLACK HAS WON ###############################")
                         print("###############################################################")
                         game_over = True
                         game.update()
@@ -112,12 +112,11 @@ def minimax_game():
         if game.turn == WHITE:
             value, new_board= minimax(game.get_board(),4, WHITE, game)
             game.ai_move(new_board)
-        
-        if game.board.check_winner(RED) or game.board.check_winner(WHITE):
-            game_over = True
-            game.update()
-            pygame.time.delay(1000) 
-            run = False
+    if game.board.check_winner(BLACK) or game.board.check_winner(WHITE):
+        game_over = True
+        game.update()
+        pygame.time.delay(1000) 
+        run = False
         
         
         for event in pygame.event.get():
@@ -145,8 +144,8 @@ def simple_machine_vs_minimax():
     while run:
         clock.tick(FPS)
     
-        if game.turn == RED and not game_over:
-            valid_moves = game.board.get_all_valid_moves(RED)
+        if game.turn == BLACK and not game_over:
+            valid_moves = game.board.get_all_valid_moves(BLACK)
             #pygame.time.delay(1500) 
             if valid_moves:
                 piece, move = random.choice(list(valid_moves.items()))
@@ -154,8 +153,8 @@ def simple_machine_vs_minimax():
                 game.board.move(piece, row, col)
                 
                 
-                if game.board.check_winner(RED):
-                    print(f"############THE RED HAS WON ##################################")
+                if game.board.check_winner(BLACK):
+                    print(f"############THE BLACK HAS WON ##################################")
                     game_over = True
                     game.update()
                     pygame.time.delay(3000)  
@@ -192,8 +191,8 @@ def minimax_vs_minimax():
     game = Game(WIN)
     game_over = False
     
-    if game.turn == RED and not game_over:
-            valid_moves = game.board.get_all_valid_moves(RED)
+    if game.turn == BLACK and not game_over:
+            valid_moves = game.board.get_all_valid_moves(BLACK)
             pygame.time.delay(500) 
             if valid_moves:
                 piece, move = random.choice(list(valid_moves.items()))
@@ -204,13 +203,13 @@ def minimax_vs_minimax():
         clock.tick(FPS)
         game.update()
         
-        if game.turn == RED:
-            value, new_board= minimax_red(game.get_board(),3,RED, game)
+        if game.turn == BLACK:
+            value, new_board= minimax_red(game.get_board(),3,BLACK, game)
             game.ai_move(new_board)
             
-        if game.board.check_winner(RED) or game.board.check_winner(WHITE):
-            if game.board.check_winner(RED): 
-                print("Red won")
+        if game.board.check_winner(BLACK) or game.board.check_winner(WHITE):
+            if game.board.check_winner(BLACK): 
+                print("Black won")
             else: print("White won")
             game_over = True
             game.update()
@@ -225,9 +224,9 @@ def minimax_vs_minimax():
             
         game.update()
         
-        if game.board.check_winner(RED) or game.board.check_winner(WHITE):
-            if game.board.check_winner(RED): 
-                print("Red won")
+        if game.board.check_winner(BLACK) or game.board.check_winner(WHITE):
+            if game.board.check_winner(BLACK): 
+                print("Black won")
             else: print("White won")
             game_over = True
             game.update()
