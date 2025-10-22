@@ -34,11 +34,16 @@ def two_player_game():
                 row, col = get_row_col_from_mouse(pos)
                 if game.select(row, col):
                     if game.board.check_winner(game.turn):
-                        print(f"#####################THE {game.turn} HAS WON #################")
-                        print("###############################################################")
+                        if game.turn == WHITE:
+                            print(f"#####################THE WHITE HAS WON #################")
+                            print("###############################################################")
+                        else:
+                            print(f"#####################THE RED HAS WON #################")
+                            print("###############################################################")
+                            
                         game_over = True
                         game.update()
-                        pygame.time.delay(3000)  # Pause de 3 secondes avant de fermer
+                        pygame.time.delay(3000)  # Pause de _ secondes avant de fermer
                         run = False  # Stop the game loop
         if not game_over:
             game.update()
