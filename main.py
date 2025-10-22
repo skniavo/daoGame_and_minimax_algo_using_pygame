@@ -105,30 +105,39 @@ def minimax_game():
     clock = pygame.time.Clock()
     game = Game(WIN)
     game_over = False
-    
+
     while run:
         clock.tick(FPS)
-        
-        if game.turn == WHITE:
-            value, new_board= minimax(game.get_board(),4, WHITE, game)
-            game.ai_move(new_board)
-    if game.board.check_winner(BLACK) or game.board.check_winner(WHITE):
-        game_over = True
-        game.update()
-        pygame.time.delay(1000) 
-        run = False
-        
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
+
+            if (not game_over) and game.turn == BLACK and event.type == pygame.MOUSEBUTTONDOWN:
                 pos = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(pos)
-                game.select(row, col)
-                
-        if not game_over:
-            game.update()
+                if game.select(row, col):
+                    if game.board.check_winner(BLACK):
+                        print("############# THE BLACK HAS WON ###############################")
+                        game_over = True
+
+        
+        if (not game_over) and game.turn == WHITE:
+            # max_player doit être booléen (True quand c'est à l'IA de maximiser)
+            value, new_board = minimax(game.get_board(), 3, True, game)
+            game.ai_move(new_board)
+            if game.board.check_winner(WHITE):
+                print("############ THE WHITE HAS WON ##############################")
+                game_over = True
+
+        
+        game.update()
+
+        # 4) Fin propre
+        if game_over:
+            pygame.time.delay(3000)
+            run = False
+
     pygame.quit()
 
 def simple_machine_vs_minimax():
