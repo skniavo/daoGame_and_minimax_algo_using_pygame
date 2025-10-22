@@ -131,6 +131,8 @@ class Board:
         if self.check_winner(WHITE):
             return WHITE
         return None
+    
+    
     def evaluate(self, player_color):
         opponent_color = BLACK if player_color == WHITE else WHITE
         # Terminal states
@@ -140,12 +142,25 @@ class Board:
             return -500
 
         score = 0
-        # Heuristic components
-        score += self.potential_alignment_score(player_color)
-        score += self.potential_square_2x2_score(player_color)
-        score += self.potential_corners_score(player_color)
+
+        # Heuristiques existantes
+        score += self.potential_alignment_score(player_color)          # alignements partiels
+        score += self.potential_square_2x2_score(player_color)         # présence dans coins 2x2
+        score += self.potential_corners_score(player_color)            # occupation des 4 coins du board
+
+        # >>> NOUVEAU : menaces (poids forts)
+        # 1) Menaces carré 2x2 (coins)
+        my_2x2_threats, opp_2x2_threats = self._count_2x2_threats(player_color)
+        score += 40 * my_2x2_threats          # j'ai 3/4 dans un coin => gros bonus
+        score -= 60 * opp_2x2_threats         # l'adversaire a 3/4 => priorité absolue à bloquer
+
+        # 2) Menaces lignes/colonnes (3 sur 4)
+        my_line_threats, opp_line_threats = self._count_line_threats(player_color)
+        score += 25 * my_line_threats         # alignement 3/4 pour moi
+        score -= 35 * opp_line_threats        # alignement 3/4 pour l'adversaire
 
         return score
+
 
     def potential_alignment_score(self, color):
         row_counts = [0] * ROWS
@@ -201,3 +216,81 @@ class Board:
                 if piece != 0 and piece.color == color:
                     pieces.append(piece)
         return pieces
+    
+    
+    
+    def _corner_squares(self):
+        # Les 4 coins (2x2)
+        return [
+            [(0, 0), (0, 1), (1, 0), (1, 1)],
+            [(0, COLS - 2), (0, COLS - 1), (1, COLS - 2), (1, COLS - 1)],
+            [(ROWS - 2, 0), (ROWS - 2, 1), (ROWS - 1, 0), (ROWS - 1, 1)],
+            [(ROWS - 2, COLS - 2), (ROWS - 2, COLS - 1), (ROWS - 1, COLS - 2), (ROWS - 1, COLS - 1)]
+        ]
+
+    def _count_2x2_threats(self, color):
+        """Retourne (mes_3sur4, adv_3sur4) dans les 2x2 de coins."""
+        my_three = 0
+        opp_three = 0
+        opp = BLACK if color == WHITE else WHITE
+
+        for corner in self._corner_squares():
+            c_my = c_opp = c_empty = 0
+            for (r, c) in corner:
+                cell = self.board[r][c]
+                if cell == 0:
+                    c_empty += 1
+                elif cell.color == color:
+                    c_my += 1
+                else:
+                    c_opp += 1
+            # 3 de moi + 1 vide => je gagne au prochain coup si j'y ai accès
+            if c_my == 3 and c_empty == 1:
+                my_three += 1
+            # 3 de l'adversaire + 1 vide => menace critique
+            if c_opp == 3 and c_empty == 1:
+                opp_three += 1
+
+        return my_three, opp_three
+
+    def _count_line_threats(self, color):
+        """Menaces de type 3-sur-4 avec 1 vide sur lignes/colonnes (4x4). 
+           Retourne (mes_3sur4, adv_3sur4).
+        """
+        my_three = 0
+        opp_three = 0
+        opp = BLACK if color == WHITE else WHITE
+
+        # Lignes
+        for r in range(ROWS):
+            c_my = c_opp = c_empty = 0
+            for c in range(COLS):
+                cell = self.board[r][c]
+                if cell == 0:
+                    c_empty += 1
+                elif cell.color == color:
+                    c_my += 1
+                else:
+                    c_opp += 1
+            if c_my == 3 and c_empty == 1:
+                my_three += 1
+            if c_opp == 3 and c_empty == 1:
+                opp_three += 1
+
+        # Colonnes
+        for c in range(COLS):
+            c_my = c_opp = c_empty = 0
+            for r in range(ROWS):
+                cell = self.board[r][c]
+                if cell == 0:
+                    c_empty += 1
+                elif cell.color == color:
+                    c_my += 1
+                else:
+                    c_opp += 1
+            if c_my == 3 and c_empty == 1:
+                my_three += 1
+            if c_opp == 3 and c_empty == 1:
+                opp_three += 1
+
+        return my_three, opp_three
