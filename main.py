@@ -1,10 +1,29 @@
-import pygame
+import pygame ,sys
 import random
+from pathlib import Path
 from files.constants import WIDTH, HEIGHT, SQUARE_SIZE, BLACK, WHITE
 from files.board import Board
 from files.game import Game
 from files.button import Button
 from minimax.algorithm import minimax, minimax_red
+
+BG =pygame.image.load("files/assets/background.png")
+
+ROOT = Path(__file__).resolve().parent
+ASSETS = ROOT / "files" / "assets"
+
+def asset_path(*parts) -> str:
+    return str(ASSETS.joinpath(*parts))
+
+def get_font(size: int) -> pygame.font.Font:
+    try:
+        return pygame.font.Font(asset_path("font.ttf"), size)
+    except Exception:
+        return pygame.font.SysFont(None, size)
+
+def load_bg_for_window() -> pygame.Surface:
+    bg = pygame.image.load(asset_path("background.png")).convert()
+    return pygame.transform.smoothscale(bg, (WIDTH, HEIGHT))
 
 
 def get_row_col_from_mouse(pos):
@@ -251,46 +270,101 @@ def minimax_vs_minimax():
                 run = False
     pygame.quit()
         
-    
+
 def main_menu():
-    pygame.display.set_caption('Main Menu')
+    pygame.init()
+    pygame.display.set_caption("Main Menu")
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    CLOCK = pygame.time.Clock()
+    BG = load_bg_for_window()
 
+    # --- Layout scalable (basé sur 800x800) ---
+    title_font_size = max(48, min(96, int(HEIGHT * 0.10)))   # ~80px
+    btn_w = int(WIDTH * 0.72)                                # ~576px
+    btn_h = int(HEIGHT * 0.09)                               # ~72px
+    btn_font_size = max(28, min(56, int(HEIGHT * 0.048)))    # ~38px
 
+    title_y = int(HEIGHT * 0.12)                             # ~96px
+    first_btn_y = int(HEIGHT * 0.26)                         # ~208px
+    btn_gap = int(HEIGHT * 0.11)                             # ~88px
 
+    # --- Helpers ---
+    def scale_button_image(filename: str, w: int, h: int) -> pygame.Surface:
+        img = pygame.image.load(asset_path(filename)).convert_alpha()
+        return pygame.transform.smoothscale(img, (w, h))
 
+    title_font = get_font(title_font_size)
+    MENU_TEXT = title_font.render("Menu", True, pygame.Color("#b68f40"))
+    MENU_RECT = MENU_TEXT.get_rect(center=(WIDTH // 2, title_y))
 
+    # Images de base redimensionnées une fois
+    play_img = scale_button_image("Play Rect.png", btn_w, btn_h)
+    quit_img = scale_button_image("Quit Rect.png", btn_w, btn_h)
 
-def main():
-    print("###############################################################")
-    print("#                 Select game mode:                           #")
-    print("#                 0 - Two player game                         #")
-    print("#                 1 - Play against a simple machine           #")
-    print("#                 2 - Play against minimax machine            #")
-    print("#                 3 - Demo : Simple machine VS minimax        #")
-    print("#                 4 - Demo : minimax VS minimax               #")
-    print("###############################################################")
-    choice = input("###################################### Enter your choice: ")
-    print("################ OKAY LETS PLAY ###############################")
+    # Police des boutons
+    btn_font = get_font(btn_font_size)
 
-    if choice == '0':
-        two_player_game()
-    elif choice == '1':
-        simple_machine_game()
-    elif choice == '2':
-        minimax_game()
-    elif choice == '3':
-        simple_machine_vs_minimax()
-    elif choice == '4':
-        minimax_vs_minimax()
-    
-    else:
-        print("Invalid choice. Exiting the game.")
-        pygame.quit()
+    # Définition des boutons (label, y, image, callback)
+    buttons_spec = [
+        ("Two player game",           first_btn_y + 0*btn_gap, play_img, two_player_game),
+        ("You   VS random bot",       first_btn_y + 1*btn_gap, play_img, simple_machine_game),
+        ("You   VS minimax bot",      first_btn_y + 2*btn_gap, play_img, minimax_game),
+        ("Random VS minimax bot",    first_btn_y + 3*btn_gap, play_img, simple_machine_vs_minimax),
+        ("Two minimax bots",   first_btn_y + 4*btn_gap, play_img, minimax_vs_minimax),
+        ("QUIT",                 first_btn_y + 6*btn_gap, quit_img, None),
+    ]
 
-#main()
+    # Instanciation des boutons
+    buttons = []
+    for label, y, img, cb in buttons_spec:
+        btn = Button(
+            image=img,
+            pos=(WIDTH // 2, y),
+            text_input=label,
+            font=btn_font,
+            base_color="#5E3A55",
+            hovering_color="brown",
+        )
+        buttons.append((btn, cb))
 
-main_menu()
+    # Boucle principale
+    running = True
+    while running:
+        CLOCK.tick(60)
+        WIN.blit(BG, (0, 0))
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Titre
+        WIN.blit(MENU_TEXT, MENU_RECT)
+
+        # Boutons
+        for btn, _ in buttons:
+            btn.changeColor(mouse_pos)
+            btn.update(WIN)
+
+        # Events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for btn, cb in buttons:
+                    if btn.checkForInput(mouse_pos):
+                        if cb is None:         # QUIT
+                            running = False
+                        else:
+                            cb()
+                            # Recharger le BG après retour du mode (au cas où set_mode ait tourné)
+                            BG = load_bg_for_window()
+
+        pygame.display.flip()
+
+    pygame.quit()
+    sys.exit()
+
+if __name__ == "__main__":
+
+    main_menu()
 
 
 
