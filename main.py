@@ -41,6 +41,7 @@ def two_player_game():
     clock = pygame.time.Clock()
     game = Game(WIN)
     game_over = False
+    winner_color = None
 
     while run:
         clock.tick(FPS)
@@ -50,226 +51,250 @@ def two_player_game():
                 run = False
 
             if not game_over and event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()  # get mouse position
-                row, col = get_row_col_from_mouse(pos)
+                row, col = get_row_col_from_mouse(pygame.mouse.get_pos())
                 if game.select(row, col):
                     if game.board.check_winner(game.turn):
-                        if game.turn == WHITE:
-                            print(f"#####################THE WHITE HAS WON #################")
-                            print("###############################################################")
-                        else:
-                            print(f"#####################THE BLACK HAS WON #################")
-                            print("###############################################################")
-                            
+                        winner_color = game.turn
                         game_over = True
-                        game.update()
-                        pygame.time.delay(3000)  # Pause de _ secondes avant de fermer
-                        run = False  # Stop the game loop
+
         if not game_over:
             game.update()
+        else:
+            show_winner_screen(winner_color)
+            return  
     pygame.quit()
 
 def simple_machine_game():
     FPS = 60
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption('dao game by Liantsoa')
-    run = True
     clock = pygame.time.Clock()
     game = Game(WIN)
-    game_over = False
 
-    while run:
+    while True:
         clock.tick(FPS)
 
-        if game.turn == WHITE and not game_over:
+        # --- Events (WHITEturn) ---
+        if game.turn == WHITE:
             valid_moves = game.board.get_all_valid_moves(WHITE)
-            pygame.time.delay(500) 
+            pygame.time.delay(300)  # léger cooldown visuel
             if valid_moves:
-                piece, move = random.choice(list(valid_moves.items()))
-                row, col = random.choice(move)
+                piece, moves = random.choice(list(valid_moves.items()))
+                row, col = random.choice(moves)
                 game.board.move(piece, row, col)
-                
+
                 if game.board.check_winner(WHITE):
-                    print(f"############THE WHITE HAS WON ##############################")
-                    print("###############################################################")
-                    game_over = True
                     game.update()
-                    pygame.time.delay(3000)  # Pause de 3 secondes avant de fermer
-                    run = False  # Stop the game loop
+                    show_winner_screen(WHITE)
+                    return  # retour au menu
+
+                game.change_turn()
+            else:
+                
                 game.change_turn()
 
+        # --- Events (BLACK turn) ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                return  #Back to menu
 
-            if not game_over and game.turn == BLACK and event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()  # get mouse position
-                row, col = get_row_col_from_mouse(pos)
+            if game.turn == BLACK and event.type == pygame.MOUSEBUTTONDOWN:
+                row, col = get_row_col_from_mouse(pygame.mouse.get_pos())
                 if game.select(row, col):
                     if game.board.check_winner(BLACK):
-                        print(f"#############THE BLACK HAS WON ###############################")
-                        print("###############################################################")
-                        game_over = True
                         game.update()
-                        pygame.time.delay(1000) 
-                        run = False  # Stop the game loop
-        if not game_over:
-            game.update()
-    pygame.quit()
+                        show_winner_screen(BLACK)
+                        return  #Back to menu
+
+        
+        game.update()
 
 def minimax_game():
     FPS = 60
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption('dao game by Liantsoa')
-    run = True
     clock = pygame.time.Clock()
     game = Game(WIN)
-    game_over = False
 
-    while run:
+    SEARCH_DEPTH = 3  # Fix if needed
+
+    while True:
         clock.tick(FPS)
 
+        # --- Tour IA (WHITE) ---
+        if game.turn == WHITE:
+            try:
+                value, new_board = minimax(game.get_board(), SEARCH_DEPTH, True, game)
+            except Exception:
+                game.change_turn()
+            else:
+                game.ai_move(new_board)
+                if game.board.check_winner(WHITE):
+                    game.update()
+                    show_winner_screen(WHITE)
+                    return  #Back menu
+
+        # --- Events  BLACK) ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                return  
 
-            if (not game_over) and game.turn == BLACK and event.type == pygame.MOUSEBUTTONDOWN:
-                pos = pygame.mouse.get_pos()
-                row, col = get_row_col_from_mouse(pos)
+            if game.turn == BLACK and event.type == pygame.MOUSEBUTTONDOWN:
+                row, col = get_row_col_from_mouse(pygame.mouse.get_pos())
                 if game.select(row, col):
                     if game.board.check_winner(BLACK):
-                        print("############# THE BLACK HAS WON ###############################")
-                        game_over = True
+                        game.update()
+                        show_winner_screen(BLACK)
+                        return 
 
-        
-        if (not game_over) and game.turn == WHITE:
-            # max_player doit être booléen (True quand c'est à l'IA de maximiser)
-            value, new_board = minimax(game.get_board(), 3, True, game)
-            game.ai_move(new_board)
-            if game.board.check_winner(WHITE):
-                print("############ THE WHITE HAS WON ##############################")
-                game_over = True
-
-        
+        # --- Dessin ---
         game.update()
-
-        # 4) Fin propre
-        if game_over:
-            pygame.time.delay(3000)
-            run = False
-
-    pygame.quit()
 
 def simple_machine_vs_minimax():
-    count_moves = 0
     FPS = 60
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption('dao game by Liantsoa')
-    run = True
+    pygame.display.set_caption("dao game by Liantsoa")
     clock = pygame.time.Clock()
     game = Game(WIN)
-    game_over = False
-    
-    while run:
+    count_moves = 0
+
+    while True:
         clock.tick(FPS)
-    
-        if game.turn == BLACK and not game_over:
+
+        if game.turn == BLACK:
             valid_moves = game.board.get_all_valid_moves(BLACK)
-            #pygame.time.delay(1500) 
+            pygame.time.delay(300)
             if valid_moves:
-                piece, move = random.choice(list(valid_moves.items()))
-                row, col = random.choice(move)
+                piece, moves = random.choice(list(valid_moves.items()))
+                row, col = random.choice(moves)
                 game.board.move(piece, row, col)
-                
-                
                 if game.board.check_winner(BLACK):
-                    print(f"############THE BLACK HAS WON ##################################")
-                    game_over = True
                     game.update()
-                    pygame.time.delay(3000)  
-                    run = False 
+                    show_winner_screen(BLACK)
+                    return
                 game.change_turn()
-                
-        game.update()
-        
-        if game.turn == WHITE and not game_over:
-            value, new_board= minimax(game.get_board(),3, WHITE, game) #THREE LEVEL TO BE MORE EFFICIENT
+            else:
+                game.change_turn()
+
+        if game.turn == WHITE:
+            value, new_board = minimax(game.get_board(), 3, True, game)
             game.ai_move(new_board)
             count_moves += 1
-            
             if game.board.check_winner(WHITE):
-                    print(f"############## THE WHITE HAS WON AFTER {count_moves} moves ################")
-                    game_over = True
-                    game.update()
-                    pygame.time.delay(3000)  
-                    run = False  
-                        
-        if not game_over:
-            game.update()
-            
+                game.update()
+                show_winner_screen(WHITE)
+                return
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
+                return
+
+        game.update()
         
 def minimax_vs_minimax():
     FPS = 60
     WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption('dao game by Liantsoa')
-    run = True
+    pygame.display.set_caption("dao game by Liantsoa")
     clock = pygame.time.Clock()
     game = Game(WIN)
-    game_over = False
-    
-    if game.turn == BLACK and not game_over:
-            valid_moves = game.board.get_all_valid_moves(BLACK)
-            pygame.time.delay(500) 
-            if valid_moves:
-                piece, move = random.choice(list(valid_moves.items()))
-                row, col = random.choice(move)
-                game.board.move(piece, row, col)
-      
-    while run:
+
+    if game.turn == BLACK:
+        valid_moves = game.board.get_all_valid_moves(BLACK)
+        pygame.time.delay(400)
+        if valid_moves:
+            piece, moves = random.choice(list(valid_moves.items()))
+            row, col = random.choice(moves)
+            game.board.move(piece, row, col)
+            game.change_turn()
+
+    while True:
         clock.tick(FPS)
         game.update()
-        
+
         if game.turn == BLACK:
-            value, new_board= minimax_red(game.get_board(),3,BLACK, game)
+            value, new_board = minimax_red(game.get_board(), 3, True, game)
             game.ai_move(new_board)
-            
-        if game.board.check_winner(BLACK) or game.board.check_winner(WHITE):
-            if game.board.check_winner(BLACK): 
-                print("Black won")
-            else: print("White won")
-            game_over = True
-            game.update()
-            pygame.time.delay(1000) 
-            run = False
-            
-        game.update()
-        
+            if game.board.check_winner(BLACK):
+                game.update()
+                show_winner_screen(BLACK)
+                return
+
         if game.turn == WHITE:
-            value, new_board= minimax(game.get_board(),3, WHITE, game)
+            value, new_board = minimax(game.get_board(), 3, True, game)
             game.ai_move(new_board)
-            
-        game.update()
-        
-        if game.board.check_winner(BLACK) or game.board.check_winner(WHITE):
-            if game.board.check_winner(BLACK): 
-                print("Black won")
-            else: print("White won")
-            game_over = True
-            game.update()
-            pygame.time.delay(1000) 
-            run = False
-            
-        if not game_over:
-            game.update()
-            
+            if game.board.check_winner(WHITE):
+                game.update()
+                show_winner_screen(WHITE)
+                return
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                run = False
-    pygame.quit()
-        
+                return
+
+
+def show_winner_screen(winner_color=None, message=None):
+    """Affiche un écran de fin avec le gagnant + bouton retour menu. Bloquant, retourne au menu quand on clique."""
+    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    CLOCK = pygame.time.Clock()
+    BG = load_bg_for_window()
+
+    # Texte principal
+    if message:
+        title = message
+    else:
+        if winner_color == WHITE:
+            title = "WHITE WINS!"
+        elif winner_color == BLACK:
+            title = "BLACK WINS!"
+        else:
+            title = "GAME OVER"
+
+    # Layout
+    title_font_size = max(56, int(HEIGHT * 0.085))
+    title_font = get_font(title_font_size)
+    # Couleur du titre: vert thème (lisible sur BG)
+    title_surface = title_font.render(title, True, pygame.Color("#769656"))
+    title_rect = title_surface.get_rect(center=(WIDTH // 2, int(HEIGHT * 0.28)))
+
+    # Bouton “Back to Menu”
+    btn_w = int(WIDTH * 0.55)
+    btn_h = int(HEIGHT * 0.09)
+    def scale_button_image(filename: str, w: int, h: int) -> pygame.Surface:
+        img = pygame.image.load(asset_path(filename)).convert_alpha()
+        return pygame.transform.smoothscale(img, (w, h))
+    back_img = scale_button_image("Play Rect.png", btn_w, btn_h)
+
+    back_btn = Button(
+        image=back_img,
+        pos=(WIDTH // 2, int(HEIGHT * 0.55)),
+        text_input="Back to Menu",
+        font=get_font(max(28, int(HEIGHT * 0.045))),
+        base_color="#d7fcd4",
+        hovering_color="brown",
+    )
+
+    # Boucle écran de fin
+    waiting = True
+    while waiting:
+        CLOCK.tick(60)
+        WIN.blit(BG, (0, 0))
+        WIN.blit(title_surface, title_rect)
+
+        mouse_pos = pygame.mouse.get_pos()
+        back_btn.changeColor(mouse_pos)
+        back_btn.update(WIN)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                waiting = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if back_btn.checkForInput(mouse_pos):
+                    waiting = False
+
+        pygame.display.flip()
+    # Retour au menu : on laisse juste la fonction RETURN
+    return
+      
 
 def main_menu():
     pygame.init()
@@ -294,17 +319,17 @@ def main_menu():
         return pygame.transform.smoothscale(img, (w, h))
 
     title_font = get_font(title_font_size)
-    MENU_TEXT = title_font.render("Menu", True, pygame.Color("#b68f40"))
+    MENU_TEXT = title_font.render("Menu", True, pygame.Color("#769656")) #769656
     MENU_RECT = MENU_TEXT.get_rect(center=(WIDTH // 2, title_y))
 
-    # Images de base redimensionnées une fois
+    
     play_img = scale_button_image("Play Rect.png", btn_w, btn_h)
     quit_img = scale_button_image("Quit Rect.png", btn_w, btn_h)
 
-    # Police des boutons
+    
     btn_font = get_font(btn_font_size)
 
-    # Définition des boutons (label, y, image, callback)
+    
     buttons_spec = [
         ("Two player game",           first_btn_y + 0*btn_gap, play_img, two_player_game),
         ("You   VS random bot",       first_btn_y + 1*btn_gap, play_img, simple_machine_game),
@@ -314,7 +339,7 @@ def main_menu():
         ("QUIT",                 first_btn_y + 6*btn_gap, quit_img, None),
     ]
 
-    # Instanciation des boutons
+    
     buttons = []
     for label, y, img, cb in buttons_spec:
         btn = Button(
@@ -322,12 +347,12 @@ def main_menu():
             pos=(WIDTH // 2, y),
             text_input=label,
             font=btn_font,
-            base_color="#5E3A55",
+            base_color="#035757",
             hovering_color="brown",
         )
         buttons.append((btn, cb))
 
-    # Boucle principale
+    
     running = True
     while running:
         CLOCK.tick(60)
