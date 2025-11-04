@@ -3,6 +3,7 @@ import random
 from files.constants import WIDTH, HEIGHT, SQUARE_SIZE, BLACK, WHITE
 from files.board import Board
 from files.game import Game
+from files.button import Button
 from minimax.algorithm import minimax, minimax_red
 
 
@@ -257,8 +258,8 @@ def main():
     print("#                 0 - Two player game                         #")
     print("#                 1 - Play against a simple machine           #")
     print("#                 2 - Play against minimax machine            #")
-    print("#                 3 - Simple machine VS minimax               #")
-    print("#                 4 - minimax VS minimax                      #")
+    print("#                 3 - Demo : Simple machine VS minimax        #")
+    print("#                 4 - Demo : minimax VS minimax               #")
     print("###############################################################")
     choice = input("###################################### Enter your choice: ")
     print("################ OKAY LETS PLAY ###############################")
