@@ -45,25 +45,26 @@ def get_all_moves(board, color, game):
 
 
 def minimax_red(position, depth, max_player, game):
-    if depth == 0 or position.winner() != None:
+    if depth == 0 or position.winner() is not None:
         return position.evaluate(BLACK), position
     
     if max_player:
         maxEval = float('-inf')
         best_move = None
-        for move in get_all_moves(position, BLACK,game):
-            evaluation = minimax(move, depth-1, False, game)[0]
-            maxEval = max(maxEval, evaluation)
-            if maxEval == evaluation:
+        for move in get_all_moves(position, BLACK, game):
+            # appel récursif doit rester dans minimax_red
+            evaluation = minimax_red(move, depth-1, False, game)[0]
+            if evaluation > maxEval:
+                maxEval = evaluation
                 best_move = move
         return maxEval, best_move
     else:
         minEval = float('inf')
         best_move = None
         for move in get_all_moves(position, WHITE, game):
-            evaluation = minimax(move, depth-1, True, game)[0]
-            minEval = min(minEval, evaluation)
-            if minEval == evaluation:
+            evaluation = minimax_red(move, depth-1, True, game)[0]
+            if evaluation < minEval:
+                minEval = evaluation
                 best_move = move
         return minEval, best_move
 
