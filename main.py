@@ -252,6 +252,15 @@ def minimax_vs_minimax():
     pygame.quit()
         
     
+def main_menu():
+    pygame.display.set_caption('Main Menu')
+    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+
+
+
+
+
+
 def main():
     print("###############################################################")
     print("#                 Select game mode:                           #")
@@ -279,4 +288,9 @@ def main():
         print("Invalid choice. Exiting the game.")
         pygame.quit()
 
-main()
+#main()
+
+main_menu()
+
+
+
